@@ -15,6 +15,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vsznedi3", "vsznedi3\vszned
 		{601746EE-41B2-4F9D-87FE-61FA0BC04EC2} = {601746EE-41B2-4F9D-87FE-61FA0BC04EC2}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnnedi3", "libnnedi3\libnnedi3.vcxproj", "{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{601746EE-41B2-4F9D-87FE-61FA0BC04EC2} = {601746EE-41B2-4F9D-87FE-61FA0BC04EC2}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -47,6 +52,14 @@ Global
 		{0F90C188-CBFC-4C50-B02C-7EE811DA6AD1}.Release|x64.Build.0 = Release|x64
 		{0F90C188-CBFC-4C50-B02C-7EE811DA6AD1}.Release|x86.ActiveCfg = Release|Win32
 		{0F90C188-CBFC-4C50-B02C-7EE811DA6AD1}.Release|x86.Build.0 = Release|Win32
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Debug|x64.ActiveCfg = Debug|x64
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Debug|x64.Build.0 = Debug|x64
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Debug|x86.ActiveCfg = Debug|Win32
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Debug|x86.Build.0 = Debug|Win32
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Release|x64.ActiveCfg = Release|x64
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Release|x64.Build.0 = Release|x64
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Release|x86.ActiveCfg = Release|Win32
+		{A8514BC1-BFA7-43B4-9686-F917E58E0ED1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
