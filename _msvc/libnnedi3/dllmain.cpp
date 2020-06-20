@@ -46,13 +46,9 @@ struct PlanarImage {
 
 template <unsigned int planes, typename ChannelType>
 bool CopyToPlanarImageTransposeExtend(PlanarImage<planes, ChannelType>& pImage, Bitmap* src) {
-	if (src->Channel != planes || sizeof(ChannelType) << 3 != src->Depth) {
-		return false;
-	}
+	if (src->Channel != planes || sizeof(ChannelType) << 3 != src->Depth) { return false; }
 
-	if (pImage.width[0] != src->Height || pImage.height[0] != 2 * src->Width) {
-		return false;
-	}
+	if (pImage.width[0] != src->Height || pImage.height[0] != 2 * src->Width) { return false; }
 
 	for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(src->Height); ++i) {
 		const ChannelType* src_p = reinterpret_cast<ChannelType*>(src->Scan0 + i * src->Stride);
@@ -79,11 +75,10 @@ bool CopyToPlanarImageTransposeExtend(PlanarImage<planes, ChannelType>& pImage, 
 }
 
 template <unsigned int planes, typename ChannelType>
-bool CopyToPlanarImageTransposeExtend(PlanarImage<planes, ChannelType>& pImage, PlanarImage<planes, ChannelType>& src) {
-	if (pImage.width[0] != src.height[0] || pImage.height[0] != 2 * src.width[0]) {
-		return false;
-	}
-	
+bool CopyToPlanarImageTransposeExtend(PlanarImage<planes, ChannelType>& pImage,
+                                      PlanarImage<planes, ChannelType>& src) {
+	if (pImage.width[0] != src.height[0] || pImage.height[0] != 2 * src.width[0]) { return false; }
+
 	for (unsigned int p = 0; p < planes; ++p) {
 		for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(src.height[p]); ++i) {
 			for (unsigned j = 0; j < src.width[p]; ++j) {
@@ -97,13 +92,9 @@ bool CopyToPlanarImageTransposeExtend(PlanarImage<planes, ChannelType>& pImage, 
 
 template <unsigned int planes, typename ChannelType>
 bool CopyToBitmap(PlanarImage<planes, ChannelType>& pImage, Bitmap* dst) {
-	if (dst->Channel != planes || sizeof(ChannelType) << 3 != dst->Depth) {
-		return false;
-	}
+	if (dst->Channel != planes || sizeof(ChannelType) << 3 != dst->Depth) { return false; }
 
-	if (pImage.width[0] != dst->Width || pImage.height[0] != dst->Height) {
-		return false;
-	}
+	if (pImage.width[0] != dst->Width || pImage.height[0] != dst->Height) { return false; }
 
 	for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(dst->Height); ++i) {
 		auto* src_p = reinterpret_cast<ChannelType*>(dst->Scan0 + i * dst->Stride);
@@ -150,14 +141,17 @@ void execute(const znedi3_filter* filter,
 
 std::unique_ptr<znedi3_weights, FreeWeights> weights;
 
-BOOL APIENTRY DllMain(HMODULE, const DWORD ul_reason_for_call, LPVOID) {
+BOOL APIENTRY DllMain(HMODULE hModule, const DWORD ul_reason_for_call, LPVOID) {
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
-		weights = std::unique_ptr<znedi3_weights, FreeWeights>{znedi3_weights_from_file("nnedi3_weights.bin")};
+		CHAR dllFilePath[512 + 1] = {0};
+		GetModuleFileNameA(hModule, dllFilePath, 512);
+		const std::string filepath(dllFilePath);
+		auto dir = filepath.substr(0, filepath.find_last_of('\\'));
+		dir += "\\nnedi3_weights.bin";
+		weights = std::unique_ptr<znedi3_weights, FreeWeights>{znedi3_weights_from_file(dir.c_str())};
 		return weights != nullptr;
 	}
-	if (ul_reason_for_call == DLL_PROCESS_DETACH) {
-		weights = nullptr;
-	}
+	if (ul_reason_for_call == DLL_PROCESS_DETACH) { weights = nullptr; }
 	return true;
 }
 
@@ -172,43 +166,33 @@ export bool DoubleImage(Bitmap* src, Bitmap* dst) {
 	znedi3_filter_params_default(&params);
 
 	params.pixel_type = src->Depth == 16 ? ZNEDI3_PIXEL_HALF : ZNEDI3_PIXEL_BYTE;
-	const std::unique_ptr<znedi3_filter, FreeFilter> filter{znedi3_filter_create(weights.get(), &params)};
+	const std::unique_ptr<znedi3_filter, FreeFilter> filter{
+		znedi3_filter_create(weights.get(), &params)
+	};
 
-	if (!filter) {
-		return false;
-	}
+	if (!filter) { return false; }
 
-	if (dst->Width != src->Width * 2 || dst->Height != src->Height * 2) {
-		return false;
-	}
+	if (dst->Width != src->Width * 2 || dst->Height != src->Height * 2) { return false; }
 
 	if (src->Channel == 3) {
 		if (src->Depth == 8) {
 			PlanarImage<3, UINT8> source1{src->Height, src->Width * 2};
-			if (!CopyToPlanarImageTransposeExtend(source1, src)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source1, src)) { return false; }
 			auto result1 = source1;
 			execute(filter.get(), source1, result1);
 			PlanarImage<3, UINT8> source2{src->Width * 2, src->Height * 2};
-			if (!CopyToPlanarImageTransposeExtend(source2, result1)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source2, result1)) { return false; }
 			auto result2 = source2;
 			execute(filter.get(), source2, result2);
 			return CopyToBitmap(result2, dst);
 		}
 		if (src->Depth == 16) {
 			PlanarImage<3, UINT16> source1{src->Height, src->Width * 2};
-			if (!CopyToPlanarImageTransposeExtend(source1, src)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source1, src)) { return false; }
 			auto result1 = source1;
 			execute(filter.get(), source1, result1);
 			PlanarImage<3, UINT16> source2{src->Width * 2, src->Height * 2};
-			if (!CopyToPlanarImageTransposeExtend(source2, result1)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source2, result1)) { return false; }
 			auto result2 = source2;
 			execute(filter.get(), source2, result2);
 			return CopyToBitmap(result2, dst);
@@ -217,30 +201,22 @@ export bool DoubleImage(Bitmap* src, Bitmap* dst) {
 	else if (src->Channel == 4) {
 		if (src->Depth == 8) {
 			PlanarImage<4, UINT8> source1{src->Height, src->Width * 2};
-			if (!CopyToPlanarImageTransposeExtend(source1, src)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source1, src)) { return false; }
 			auto result1 = source1;
 			execute(filter.get(), source1, result1);
 			PlanarImage<4, UINT8> source2{src->Width * 2, src->Height * 2};
-			if (!CopyToPlanarImageTransposeExtend(source2, result1)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source2, result1)) { return false; }
 			auto result2 = source2;
 			execute(filter.get(), source2, result2);
 			return CopyToBitmap(result2, dst);
 		}
 		if (src->Depth == 16) {
 			PlanarImage<4, UINT16> source1{src->Height, src->Width * 2};
-			if (!CopyToPlanarImageTransposeExtend(source1, src)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source1, src)) { return false; }
 			auto result1 = source1;
 			execute(filter.get(), source1, result1);
 			PlanarImage<4, UINT16> source2{src->Width * 2, src->Height * 2};
-			if (!CopyToPlanarImageTransposeExtend(source2, result1)) {
-				return false;
-			}
+			if (!CopyToPlanarImageTransposeExtend(source2, result1)) { return false; }
 			auto result2 = source2;
 			execute(filter.get(), source2, result2);
 			return CopyToBitmap(result2, dst);
@@ -249,7 +225,7 @@ export bool DoubleImage(Bitmap* src, Bitmap* dst) {
 
 	return false;
 }
-	
+
 #ifdef __cplusplus
 }
 #endif
